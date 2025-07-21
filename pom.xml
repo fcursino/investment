@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.fcursino</groupId>
-	<artifactId>investiment</artifactId>
+	<artifactId>investment</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>investiment</name>
+	<name>investment</name>
 	<description>Agregador de Investimentos</description>
 	<url/>
 	<licenses>
