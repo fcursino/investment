@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,8 +22,8 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.fcursino.investiment.controller.CreateUserDTO;
-import com.fcursino.investiment.controller.UpdateUserDTO;
+import com.fcursino.investiment.controller.dto.CreateUserDTO;
+import com.fcursino.investiment.controller.dto.UpdateUserDTO;
 import com.fcursino.investiment.entity.User;
 import com.fcursino.investiment.repository.UserRepository;
 
@@ -54,7 +55,8 @@ public class UserServiceTest {
                     "password123",
                     "testuser@email.com",
                     Instant.now(),
-                    null);
+                    null,
+                    new ArrayList<>());
             doReturn(user).when(userRepository).save(userArgumentCaptor.capture());
             var input = new CreateUserDTO(
                     "testuser",
@@ -98,7 +100,8 @@ public class UserServiceTest {
                     "password123",
                     "testuser@email.com",
                     Instant.now(),
-                    null);
+                    null,
+                    new ArrayList<>());
             doReturn(Optional.of(user)).when(userRepository).findById(uuidArgumentCaptor.capture());
             // act
             var output = userService.getUserById(user.getUserId().toString());
@@ -134,7 +137,8 @@ public class UserServiceTest {
                         "password123",
                         "testuser@email.com",
                         Instant.now(),
-                        null);
+                        null,
+                        new ArrayList<>());
                 var userList = List.of(user);
                 doReturn(userList).when(userRepository).findAll();
                 // act
@@ -198,7 +202,9 @@ public class UserServiceTest {
                         "password123",
                         "testuser@email.com",
                         Instant.now(),
-                        null);
+                        null,
+                        new ArrayList<>()
+                        );
                 doReturn(Optional.of(user)).when(userRepository).findById(uuidArgumentCaptor.capture());
                 doReturn(user).when(userRepository).save(userArgumentCaptor.capture());
                 
