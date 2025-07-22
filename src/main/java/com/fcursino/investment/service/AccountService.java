@@ -4,10 +4,12 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fcursino.investment.client.BrapiClient;
 import com.fcursino.investment.controller.dto.AccountStockResponseDTO;
 import com.fcursino.investment.controller.dto.AssociateAccountStockDTO;
 import com.fcursino.investment.entity.AccountStock;
@@ -27,6 +29,12 @@ public class AccountService {
 
     @Autowired
     private AccountStockRepository accountStockRepository;
+
+    @Autowired
+    private BrapiClient brapiClient;
+
+    @Value("#{environment.TOKEN}")
+    private String token;
 
     public void associateStock(String accountId, AssociateAccountStockDTO dto) {
         var account = accountRepository.findById(UUID.fromString(accountId))
@@ -58,8 +66,17 @@ public class AccountService {
             .map(as -> new AccountStockResponseDTO(
                 as.getStock().getStockId(),
                 as.getQuantity(),
-                0.0
+                getTotal(as.getStock().getStockId(),
+                as.getQuantity())
             )).toList();
+    }
+
+    private Double getTotal(String stockId, Integer quantity) {
+        
+        var response = brapiClient.getQuote(token, stockId);
+        var price = response.results().getFirst().regularMarketPrice();
+
+        return quantity * price;
     }
 
     
