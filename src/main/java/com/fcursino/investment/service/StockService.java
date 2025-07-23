@@ -13,13 +13,13 @@ public class StockService {
     @Autowired
     private StockRepository stockRepository;
 
-    public void createStock(CreateStockDTO createStockDTO) {
+    public Stock createStock(CreateStockDTO createStockDTO) {
         var stock = new Stock(
             createStockDTO.stockId(),
             createStockDTO.description()
         );
 
-        stockRepository.save(stock);
+        return stockRepository.save(stock);
     }
 
     

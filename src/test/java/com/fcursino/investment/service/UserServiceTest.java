@@ -22,17 +22,30 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.fcursino.investment.controller.dto.CreateUserDTO;
+import com.fcursino.investment.controller.dto.CreateAccountDTO;
 import com.fcursino.investment.controller.dto.UpdateUserDTO;
+import com.fcursino.investment.entity.Account;
+import com.fcursino.investment.entity.BillingAddress;
 import com.fcursino.investment.entity.User;
+import com.fcursino.investment.repository.AccountRepository;
+import com.fcursino.investment.repository.BillingAddressRepository;
 import com.fcursino.investment.repository.UserRepository;
-import com.fcursino.investment.service.UserService;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private AccountRepository accountRepository;
+
+    @Mock
+    private BillingAddressRepository billingAddressRepository;
 
     @InjectMocks
     private UserService userService;
@@ -42,6 +55,12 @@ public class UserServiceTest {
 
     @Captor
     private ArgumentCaptor<UUID> uuidArgumentCaptor;
+
+    @Captor
+    private ArgumentCaptor<Account> accountArgumentCaptor;
+
+    @Captor
+    private ArgumentCaptor<BillingAddress> billingAddressArgumentCaptor;
 
     @Nested
     class createUser {
@@ -241,6 +260,116 @@ public class UserServiceTest {
                 assertEquals(userId, uuidArgumentCaptor.getValue());
                 verify(userRepository, times(1)).findById(uuidArgumentCaptor.getValue());
                 verify(userRepository, never()).save(any());
+            }
+        }
+
+        @Nested
+        class createAccount {
+
+            @Test
+            @DisplayName("should create an account and its billing address when user exists")
+            void shouldCreateAnAccountWhenUserExists() {
+                //arrange 
+                var user = new User(
+                        UUID.randomUUID(),
+                        "testuser",
+                        "password123",
+                        "testuser@email.com",
+                        Instant.now(),
+                        null,
+                        new ArrayList<>()
+                        );
+
+                var input = new CreateAccountDTO(
+                    "description",
+                    "Rua 5",
+                    77
+                );
+
+                var account = new Account(
+                    UUID.randomUUID(),
+                    input.description(),
+                    user,
+                    null,
+                    new ArrayList<>()
+                );
+
+                var billingAddress = new BillingAddress(
+                    account.getAccountId(),
+                    input.street(),
+                    input.number(),
+                    account
+                );
+                doReturn(Optional.of(user)).when(userRepository).findById(uuidArgumentCaptor.capture());
+                doReturn(account).when(accountRepository).save(accountArgumentCaptor.capture());
+                doReturn(billingAddress).when(billingAddressRepository).save(billingAddressArgumentCaptor.capture());
+
+                account.setBillingAddress(billingAddress);
+                user.setAccounts(List.of(account));
+                //act
+                userService.createAccount(user.getUserId().toString(), input);
+
+                //assert
+                verify(userRepository, times(1)).findById(uuidArgumentCaptor.getValue());
+                verify(accountRepository, times(1)).save(accountArgumentCaptor.getValue());
+                verify(billingAddressRepository, times(1)).save(billingAddressArgumentCaptor.getValue());
+            }
+
+            @Test
+            @DisplayName("should not create an account or a billing address when user not exists")
+            void shouldNotCreateAnAccountWhenUserNotExists() {
+                // arrange
+                var userId = UUID.randomUUID();
+                var input = new CreateAccountDTO(
+                    "description",
+                    "Rua 5",
+                    77
+                );
+                doThrow(new ResponseStatusException(HttpStatusCode.valueOf(404))).when(userRepository).findById(userId);
+                // act & assert
+                assertThrows(ResponseStatusException.class, () -> userService.createAccount(userId.toString(), input));
+        
+                verify(userRepository, times(1)).findById(userId);
+                verify(accountRepository, never()).save(any());
+                verify(billingAddressRepository, never()).save(any());
+            }
+        }
+
+        @Nested
+        class getAccounts {
+
+            @Test
+            @DisplayName("should return user accounts when user exists")
+            void shouldReturnUserAccounts() {
+                //arrange
+                var user = new User(
+                        UUID.randomUUID(),
+                        "testuser",
+                        "password123",
+                        "testuser@email.com",
+                        Instant.now(),
+                        null,
+                        new ArrayList<>()
+                        );
+                doReturn(Optional.of(user)).when(userRepository).findById(uuidArgumentCaptor.capture());
+
+                var account = new Account(
+                    UUID.randomUUID(),
+                    "description",
+                    user,
+                    null,
+                    new ArrayList<>()
+                );
+                
+                var accountList = List.of(account);
+                user.setAccounts(accountList);
+
+                //act
+                var output = userService.getAccounts(user.getUserId().toString());
+
+                //assert
+                assertNotNull(output);
+                assertEquals(accountList.size(), output.size());
             }
         }
 
