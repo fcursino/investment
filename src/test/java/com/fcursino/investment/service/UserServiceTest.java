@@ -223,11 +223,10 @@ public class UserServiceTest {
                         "testuser@email.com",
                         Instant.now(),
                         null,
-                        new ArrayList<>()
-                        );
+                        new ArrayList<>());
                 doReturn(Optional.of(user)).when(userRepository).findById(uuidArgumentCaptor.capture());
                 doReturn(user).when(userRepository).save(userArgumentCaptor.capture());
-                
+
                 var input = new UpdateUserDTO(
                         "testuserupdated",
                         "password1234");
@@ -261,6 +260,41 @@ public class UserServiceTest {
                 verify(userRepository, times(1)).findById(uuidArgumentCaptor.getValue());
                 verify(userRepository, never()).save(any());
             }
+
+            @Test
+            void updateUserUpdatesUsernameWhenUsernameProvided() {
+                var userId = UUID.randomUUID().toString();
+                var user = new User();
+                user.setUsername("old");
+                user.setPassword("oldpass");
+                var updateDto = new UpdateUserDTO("new", null);
+
+                when(userRepository.findById(UUID.fromString(userId))).thenReturn(Optional.of(user));
+
+                userService.updateUser(userId, updateDto);
+
+                assertEquals("new", user.getUsername());
+                assertEquals("oldpass", user.getPassword());
+                verify(userRepository).save(user);
+            }
+
+            @Test
+            void updateUserUpdatesPasswordWhenPasswordProvided() {
+                var userId = UUID.randomUUID().toString();
+                var user = new User();
+                user.setUsername("old");
+                user.setPassword("oldpass");
+                var updateDto = new UpdateUserDTO(null, "newpass");
+
+                when(userRepository.findById(UUID.fromString(userId))).thenReturn(Optional.of(user));
+
+                userService.updateUser(userId, updateDto);
+
+                assertEquals("old", user.getUsername());
+                assertEquals("newpass", user.getPassword());
+                verify(userRepository).save(user);
+            }
+
         }
 
         @Nested
@@ -269,7 +303,7 @@ public class UserServiceTest {
             @Test
             @DisplayName("should create an account and its billing address when user exists")
             void shouldCreateAnAccountWhenUserExists() {
-                //arrange 
+                // arrange
                 var user = new User(
                         UUID.randomUUID(),
                         "testuser",
@@ -277,39 +311,35 @@ public class UserServiceTest {
                         "testuser@email.com",
                         Instant.now(),
                         null,
-                        new ArrayList<>()
-                        );
+                        new ArrayList<>());
 
                 var input = new CreateAccountDTO(
-                    "description",
-                    "Rua 5",
-                    77
-                );
+                        "description",
+                        "Rua 5",
+                        77);
 
                 var account = new Account(
-                    UUID.randomUUID(),
-                    input.description(),
-                    user,
-                    null,
-                    new ArrayList<>()
-                );
+                        UUID.randomUUID(),
+                        input.description(),
+                        user,
+                        null,
+                        new ArrayList<>());
 
                 var billingAddress = new BillingAddress(
-                    account.getAccountId(),
-                    input.street(),
-                    input.number(),
-                    account
-                );
+                        account.getAccountId(),
+                        input.street(),
+                        input.number(),
+                        account);
                 doReturn(Optional.of(user)).when(userRepository).findById(uuidArgumentCaptor.capture());
                 doReturn(account).when(accountRepository).save(accountArgumentCaptor.capture());
                 doReturn(billingAddress).when(billingAddressRepository).save(billingAddressArgumentCaptor.capture());
 
                 account.setBillingAddress(billingAddress);
                 user.setAccounts(List.of(account));
-                //act
+                // act
                 userService.createAccount(user.getUserId().toString(), input);
 
-                //assert
+                // assert
                 verify(userRepository, times(1)).findById(uuidArgumentCaptor.getValue());
                 verify(accountRepository, times(1)).save(accountArgumentCaptor.getValue());
                 verify(billingAddressRepository, times(1)).save(billingAddressArgumentCaptor.getValue());
@@ -321,14 +351,13 @@ public class UserServiceTest {
                 // arrange
                 var userId = UUID.randomUUID();
                 var input = new CreateAccountDTO(
-                    "description",
-                    "Rua 5",
-                    77
-                );
+                        "description",
+                        "Rua 5",
+                        77);
                 doThrow(new ResponseStatusException(HttpStatusCode.valueOf(404))).when(userRepository).findById(userId);
                 // act & assert
                 assertThrows(ResponseStatusException.class, () -> userService.createAccount(userId.toString(), input));
-        
+
                 verify(userRepository, times(1)).findById(userId);
                 verify(accountRepository, never()).save(any());
                 verify(billingAddressRepository, never()).save(any());
@@ -341,7 +370,7 @@ public class UserServiceTest {
             @Test
             @DisplayName("should return user accounts when user exists")
             void shouldReturnUserAccounts() {
-                //arrange
+                // arrange
                 var user = new User(
                         UUID.randomUUID(),
                         "testuser",
@@ -349,25 +378,23 @@ public class UserServiceTest {
                         "testuser@email.com",
                         Instant.now(),
                         null,
-                        new ArrayList<>()
-                        );
+                        new ArrayList<>());
                 doReturn(Optional.of(user)).when(userRepository).findById(uuidArgumentCaptor.capture());
 
                 var account = new Account(
-                    UUID.randomUUID(),
-                    "description",
-                    user,
-                    null,
-                    new ArrayList<>()
-                );
-                
+                        UUID.randomUUID(),
+                        "description",
+                        user,
+                        null,
+                        new ArrayList<>());
+
                 var accountList = List.of(account);
                 user.setAccounts(accountList);
 
-                //act
+                // act
                 var output = userService.getAccounts(user.getUserId().toString());
 
-                //assert
+                // assert
                 assertNotNull(output);
                 assertEquals(accountList.size(), output.size());
             }
