@@ -10,4 +10,9 @@ class InvestmentApplicationTests {
 	void contextLoads() {
 	}
 
+	@Test
+    void mainMethodRuns() {
+        InvestmentApplication.main(new String[]{});
+    }
+
 }
