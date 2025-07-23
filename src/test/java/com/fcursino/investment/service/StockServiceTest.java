@@ -15,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.fcursino.investment.controller.dto.CreateStockDTO;
 
 import com.fcursino.investment.entity.Stock;
-import com.fcursino.investment.entity.User;
 import com.fcursino.investment.repository.StockRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,11 +46,11 @@ public class StockServiceTest {
         "description of stock"
       );
       //act
-      var output = stockService.createStock(input);
+      stockService.createStock(input);
 
       //assert
-      assertEquals(input.stockId(), output.getStockId());
-      assertEquals(input.description(), output.getDescription());
+      assertEquals("STCK", stockArgumentCaptor.getValue().getStockId());
+      assertEquals("description of stock", stockArgumentCaptor.getValue().getDescription());
     }
   }
 }
