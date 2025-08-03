@@ -9,3 +9,27 @@ services:
       - 'MYSQL_USER=myuser'
     ports:
       - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - backend
+
+  spring-app:
+    container_name: 'investment-api'
+    build: .
+    ports:
+      - '8080:8080'
+    depends_on:
+      - mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mydatabase
+      SPRING_DATASOURCE_USERNAME: myuser
+      SPRING_DATASOURCE_PASSWORD: secret
+    networks:
+      - backend
+
+volumes:
+  mysql-data:
+
+networks:
+  backend:
