@@ -33,7 +33,7 @@ public class AccountService {
     @Autowired
     private BrapiClient brapiClient;
 
-    @Value("#{environment.TOKEN}")
+    @Value("#{environment.BRAPI_API_TOKEN}")
     private String token;
 
     public void associateStock(String accountId, AssociateAccountStockDTO dto) {

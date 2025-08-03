@@ -1,6 +1,5 @@
 package com.fcursino.investment.controller;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fcursino.investment.controller.dto.AccountResponseDTO;
 import com.fcursino.investment.controller.dto.CreateAccountDTO;
-import com.fcursino.investment.controller.dto.CreateUserDTO;
 import com.fcursino.investment.controller.dto.UpdateUserDTO;
 import com.fcursino.investment.entity.User;
 import com.fcursino.investment.service.UserService;
@@ -28,12 +26,6 @@ public class UserController {
 
     @Autowired
     private UserService userService;
-
-    @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody CreateUserDTO createUserDTO) {
-        User newUser = userService.createUser(createUserDTO);
-        return ResponseEntity.created(URI.create("/v1/users/" + newUser.getUserId())).build();
-    }
 
     @GetMapping("/{userId}")
     public ResponseEntity<User> getUserById(@PathVariable("userId") String userId) {
