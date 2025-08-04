@@ -1,5 +1,6 @@
 package com.fcursino.investment.controller;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,7 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fcursino.investment.controller.dto.AccountResponseDTO;
+import com.fcursino.investment.controller.dto.AuthDTO;
 import com.fcursino.investment.controller.dto.CreateAccountDTO;
+import com.fcursino.investment.controller.dto.CreateUserDTO;
+import com.fcursino.investment.controller.dto.LoginDTO;
 import com.fcursino.investment.controller.dto.UpdateUserDTO;
 import com.fcursino.investment.entity.User;
 import com.fcursino.investment.service.UserService;
@@ -26,6 +30,18 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @PostMapping("/auth")
+    public ResponseEntity login(@RequestBody LoginDTO loginDTO) {
+        AuthDTO authDTO = this.userService.login(loginDTO);
+        return ResponseEntity.ok().body(authDTO.token());
+    }
+
+    @PostMapping
+    public ResponseEntity createUser(@RequestBody CreateUserDTO createUserDTO) {
+        AuthDTO authDTO = this.userService.createUser(createUserDTO);
+        return ResponseEntity.created(URI.create("/v1/users/" + authDTO.user().getUserId())).body(authDTO.token());
+    }
 
     @GetMapping("/{userId}")
     public ResponseEntity<User> getUserById(@PathVariable("userId") String userId) {

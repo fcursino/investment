@@ -7,16 +7,20 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fcursino.investment.controller.dto.AccountResponseDTO;
+import com.fcursino.investment.controller.dto.AuthDTO;
 import com.fcursino.investment.controller.dto.CreateAccountDTO;
 import com.fcursino.investment.controller.dto.CreateUserDTO;
+import com.fcursino.investment.controller.dto.LoginDTO;
 import com.fcursino.investment.controller.dto.UpdateUserDTO;
 import com.fcursino.investment.entity.Account;
 import com.fcursino.investment.entity.BillingAddress;
 import com.fcursino.investment.entity.User;
+import com.fcursino.investment.infra.security.TokenService;
 import com.fcursino.investment.repository.AccountRepository;
 import com.fcursino.investment.repository.BillingAddressRepository;
 import com.fcursino.investment.repository.UserRepository;
@@ -33,12 +37,33 @@ public class UserService {
     @Autowired
     private BillingAddressRepository billingAddressRepository;
 
-    public User createUser(CreateUserDTO createUserDTO) {
-        User user = new User();
-        user.setUsername(createUserDTO.username());
-        user.setPassword(createUserDTO.password());
-        user.setEmail(createUserDTO.email());
-        return userRepository.save(user);
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private TokenService tokenService;
+
+    public AuthDTO login(LoginDTO loginDTO) {
+         User user = this.userRepository.findByEmail(loginDTO.email()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found."));
+        if(passwordEncoder.matches(loginDTO.password(), user.getPassword())) {
+            String token = this.tokenService.generateToken(user);
+            return new AuthDTO(user, token);
+        }
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials.");
+    }
+
+    public AuthDTO createUser(CreateUserDTO createUserDTO) {
+        Optional<User> user = this.userRepository.findByEmail(createUserDTO.email());
+        if (user.isEmpty()) {
+            User newUser = new User();
+            newUser.setUsername(createUserDTO.username());
+            newUser.setPassword(passwordEncoder.encode(createUserDTO.password()));
+            newUser.setEmail(createUserDTO.email());
+            User savedUser = userRepository.save(newUser);
+            String token = this.tokenService.generateToken(savedUser);
+            return new AuthDTO(savedUser, token);
+        }
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already in use.");
     }
 
     public Optional<User> getUserById(String userId) {
@@ -104,5 +129,7 @@ public class UserService {
             ).toList();
     }
 
-    
+    public Optional<User> findUserByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
 }
