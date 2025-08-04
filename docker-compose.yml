@@ -1,35 +1,40 @@
+version: '3.8'
+
 services:
   mysql:
-    container_name: 'guide-mysql'
     image: 'mysql:latest'
+    container_name: 'guide-mysql'
     environment:
-      - 'MYSQL_DATABASE=mydatabase'
-      - 'MYSQL_PASSWORD=secret'
-      - 'MYSQL_ROOT_PASSWORD=verysecret'
-      - 'MYSQL_USER=myuser'
+      - MYSQL_DATABASE=mydatabase
+      - MYSQL_USER=myuser
+      - MYSQL_PASSWORD=secret
+      - MYSQL_ROOT_PASSWORD=verysecret
     ports:
       - '3306:3306'
+    networks:
+      - springnet
     volumes:
       - mysql-data:/var/lib/mysql
-    networks:
-      - backend
 
-  spring-app:
+  spring-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: 'investment-api'
-    build: .
-    ports:
-      - '8080:8080'
     depends_on:
       - mysql
+    ports:
+      - '8080:8080'
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mydatabase
-      SPRING_DATASOURCE_USERNAME: myuser
-      SPRING_DATASOURCE_PASSWORD: secret
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/mydatabase
+      - SPRING_DATASOURCE_USERNAME=myuser
+      - SPRING_DATASOURCE_PASSWORD=secret
+      - JWT_SECRET=my-secret
     networks:
-      - backend
+      - springnet
 
 volumes:
   mysql-data:
 
 networks:
-  backend:
+  springnet:
